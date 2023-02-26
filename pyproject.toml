@@ -4,10 +4,11 @@ version = "0.1.0"
 description = "The hypermodern Python project"
 authors = ["chao <versatran01@gmail.com>"]
 readme = "README.md"
-packages = [{include = "hypermodern_python"}]
+# packages = [{include = "hypermodern_python"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+click = "^8.1.3"
 
 
 [build-system]
