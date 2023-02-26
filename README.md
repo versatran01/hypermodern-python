@@ -22,3 +22,16 @@ Initialize your Python project:
 ```
 poetry init --no-interaction
 ```
+
+Install some packages
+```
+poetry add click
+poetry add requests
+```
+
+## Test
+
+Install some more packages
+```
+poetry add --dev pytest
+```
