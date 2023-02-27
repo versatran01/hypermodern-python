@@ -34,4 +34,6 @@ poetry add requests
 Install some more packages
 ```
 poetry add --dev pytest
+poetry add --dev coverage[toml] pytest-cov
+poetry add --dev nox
 ```
