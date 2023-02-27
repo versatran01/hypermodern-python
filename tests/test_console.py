@@ -1,9 +1,9 @@
-import click.testing
 from click.testing import CliRunner as Runner
 import pytest
 import requests
 
 from hypermodern_python import console
+from hypermodern_python import wikipedia
 
 # def test_main_succeeds():
 #     runner = click.testing.CliRunner()
@@ -12,19 +12,13 @@ from hypermodern_python import console
 
 
 @pytest.fixture
-def mock_requests_get(mocker):
-    # Use mocker.patch to replace the requests.get function with a mock.
-    mock = mocker.patch("requests.get")
-    mock.return_value.__enter__.return_value.json.return_value = {
-        "title": "Mock title",
-        "extract": "Mock extract",
-    }
-    return mock
+def runner() -> Runner:
+    return Runner()
 
 
 @pytest.fixture
-def runner() -> Runner:
-    return Runner()
+def mock_wikipedia_random_page(mocker):
+    return mocker.patch("hypermodern_python.wikipedia.random_page")
 
 
 def test_main_succeeds(runner: Runner, mock_requests_get):
@@ -59,3 +53,22 @@ def test_main_prints_message_on_request_error(runner: Runner,
     mock_requests_get.side_effect = requests.RequestException
     result = runner.invoke(console.main)
     assert "Error" in result.output
+
+
+def test_random_page_uses_given_language(mock_requests_get):
+    wikipedia.random_page(language="de")
+    args, _ = mock_requests_get.call_args
+    assert "de.wikipedia.org" in args[0]
+
+
+def test_main_uses_specified_language(runner: Runner,
+                                      mock_wikipedia_random_page):
+    language = "pl"
+    runner.invoke(console.main, [f"--language={language}"])
+    mock_wikipedia_random_page.assert_called_with(language=language)
+
+
+@pytest.mark.e2e
+def test_main_succeeds_in_production_env(runner: Runner):
+    result = runner.invoke(console.main)
+    assert result.exit_code == 0

@@ -37,3 +37,8 @@ poetry add --dev pytest
 poetry add --dev coverage[toml] pytest-cov
 poetry add --dev nox
 ```
+
+Run end-to-end test
+```
+nox -r -- -m e2e
+```
