@@ -12,7 +12,9 @@ locations = "src", "tests", "noxfile.py"
 python_versions = ["3.10"]
 
 
-def install_with_constraints(session: Session, *args: str, **kwargs: T.Any) -> None:
+def install_with_constraints(
+    session: Session, group: str, *args: str, **kwargs: T.Any
+) -> None:
     """Install packages constrained by Poetry's lock file.
 
     This function is a wrapper for nox.sessions.Session.install. It
@@ -32,7 +34,7 @@ def install_with_constraints(session: Session, *args: str, **kwargs: T.Any) -> N
             "poetry",
             "export",
             "--with",
-            "dev",
+            group,
             "--format=constraints.txt",
             "--without-hashes",
             f"--output={requirements.name}",
@@ -45,7 +47,9 @@ def install_with_constraints(session: Session, *args: str, **kwargs: T.Any) -> N
 def tests(session: Session) -> None:
     args = session.posargs or ["--cov", "-m", "not e2e"]
     session.run("poetry", "install", "--only", "main", external=True)
-    install_with_constraints(session, "coverage", "pytest", "pytest-cov", "pytest-mock")
+    install_with_constraints(
+        session, "test", "coverage", "pytest", "pytest-cov", "pytest-mock"
+    )
     session.run("pytest", *args)
 
 
@@ -54,6 +58,7 @@ def lint(session: Session) -> None:
     args = session.posargs or locations
     install_with_constraints(
         session,
+        "lint",
         "flake8",
         "flake8-annotations",
         "flake8-bandit",
@@ -67,30 +72,14 @@ def lint(session: Session) -> None:
 @nox.session(python=python_versions)
 def black(session: Session) -> None:
     args = session.posargs or locations
-    install_with_constraints(session, "black")
+    install_with_constraints(session, "lint", "black")
     session.run("black", *args)
-
-
-@nox.session(python=python_versions)
-def safety(session: Session) -> None:
-    with tempfile.NamedTemporaryFile() as requirements:
-        session.run(
-            "poetry",
-            "export",
-            "--dev",
-            "--format=requirements.txt",
-            "--without-hashes",
-            f"--output={requirements.name}",
-            external=True,
-        )
-        session.install("safety")
-        session.run("safety", "check", f"--file={requirements.name}", "--full-report")
 
 
 @nox.session(python=python_versions)
 def mypy(session: Session) -> None:
     args = session.posargs or locations
-    install_with_constraints(session, "mypy", "click")
+    install_with_constraints(session, "typing", "mypy", "click")
     session.run("mypy", "--install-types", "--non-interactive", *args)
     session.run("mypy", *args)
 
@@ -99,5 +88,5 @@ def mypy(session: Session) -> None:
 def pytype(session: Session) -> None:
     """Type-check using pytype."""
     args = session.posargs or ["--disable=import-error", *locations]
-    install_with_constraints(session, "pytype")
+    install_with_constraints(session, "typing", "pytype")
     session.run("pytype", *args)

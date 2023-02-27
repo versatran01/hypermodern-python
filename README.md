@@ -1,5 +1,7 @@
 # hypermodern-python
 
+https://github.com/cjolowicz/hypermodern-python
+
 ## Setup
 
 First create a conda environment
@@ -27,18 +29,4 @@ Install some packages
 ```
 poetry add click
 poetry add requests
-```
-
-## Test
-
-Install some more packages
-```
-poetry add --dev pytest
-poetry add --dev coverage[toml] pytest-cov
-poetry add --dev nox
-```
-
-Run end-to-end test
-```
-nox -r -- -m e2e
 ```
