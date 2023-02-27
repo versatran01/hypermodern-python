@@ -3,7 +3,7 @@ import tempfile
 import nox
 
 # Exclude black from the sessions run by default
-nox.options.sessions = "lint", "tests", "mypy"
+nox.options.sessions = "lint", "tests", "mypy", "pytype"
 
 package = "hypermodern_python"
 locations = "src", "tests", "noxfile.py"
@@ -11,11 +11,26 @@ python_versions = ["3.10"]
 
 
 def install_with_constraints(session, *args, **kwargs):
+    """Install packages constrained by Poetry's lock file.
+
+    This function is a wrapper for nox.sessions.Session.install. It
+    invokes pip to install packages inside of the session's virtualenv.
+    Additionally, pip is passed a constraints file generated from
+    Poetry's lock file, to ensure that the packages are pinned to the
+    versions specified in poetry.lock. This allows you to manage the
+    packages as Poetry development dependencies.
+
+    Arguments:
+        session: The Session object.
+        args: Command-line arguments for pip.
+        kwargs: Additional keyword arguments for Session.install.
+    """
     with tempfile.NamedTemporaryFile() as requirements:
         session.run(
             "poetry",
             "export",
-            "--dev",
+            "--with",
+            "dev",
             "--format=constraints.txt",
             "--without-hashes",
             f"--output={requirements.name}",
@@ -27,7 +42,7 @@ def install_with_constraints(session, *args, **kwargs):
 @nox.session(python=python_versions)
 def tests(session):
     args = session.posargs or ["--cov", "-m", "not e2e"]
-    session.run("poetry", "install", "--no-dev", external=True)
+    session.run("poetry", "install", "--only", "main", external=True)
     install_with_constraints(session, "coverage", "pytest", "pytest-cov", "pytest-mock")
     session.run("pytest", *args)
 
@@ -74,3 +89,10 @@ def mypy(session):
     args = session.posargs or locations
     install_with_constraints(session, "mypy")
     session.run("mypy", *args)
+
+@nox.session(python=python_versions)
+def pytype(session) -> None:
+    """Type-check using pytype."""
+    args = session.posargs or ["--disable=import-error", *locations]
+    install_with_constraints(session, "pytype")
+    session.run("pytype", *args)
