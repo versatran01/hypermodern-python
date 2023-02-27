@@ -90,7 +90,8 @@ def safety(session: Session) -> None:
 @nox.session(python=python_versions)
 def mypy(session: Session) -> None:
     args = session.posargs or locations
-    install_with_constraints(session, "mypy")
+    install_with_constraints(session, "mypy", "click")
+    session.run("mypy", "--install-types", "--non-interactive", *args)
     session.run("mypy", *args)
 
 
